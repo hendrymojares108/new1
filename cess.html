@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="pfavicon.png" type="image/png">
+<title>For You ❤️</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:wght@400;700&family=Great+Vibes&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #1a0a0a;
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* ============ MUSIC OVERLAY ============ */
+  #musicOverlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: radial-gradient(ellipse at center, #2d0a0a 0%, #0d0000 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer; transition: opacity 0.8s;
+  }
+  #musicOverlay.hidden { opacity: 0; pointer-events: none; }
+  #musicOverlay .tap-text {
+    font-family: 'Great Vibes', cursive;
+    font-size: 2.5rem; color: #ff6b8a;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  #musicOverlay .heart-icon {
+    font-size: 5rem; margin-bottom: 20px;
+    animation: heartbeat 1.2s ease-in-out infinite;
+  }
+
+  /* ============ BACKGROUND PHOTOS GRID ============ */
+  #photoPage {
+    position: fixed; inset: 0; z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 6px; padding: 6px;
+    transition: opacity 0.6s;
+  }
+  #photoPage.hide-photos .photo-cell {
+    transform: scale(0) rotate(30deg);
+    opacity: 0;
+  }
+
+  .photo-cell {
+    position: relative; overflow: hidden;
+    border-radius: 12px;
+    border: 2px solid rgba(255,107,138,0.3);
+    transition: transform 0.8s cubic-bezier(.68,-0.55,.27,1.55), opacity 0.8s ease;
+    box-shadow: 0 0 15px rgba(255,50,80,0.2);
+  }
+  .photo-cell:nth-child(odd)  { transition-delay: 0.05s; }
+  .photo-cell:nth-child(even) { transition-delay: 0.15s; }
+  .photo-cell:nth-child(3n)   { transition-delay: 0.25s; }
+  .photo-cell:nth-child(4n)   { transition-delay: 0.35s; }
+
+  .photo-cell img, .photo-cell video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(0.55) saturate(1.2);
+    transition: filter 0.4s;
+  }
+  .photo-cell:hover img, .photo-cell:hover video {
+    filter: brightness(0.85) saturate(1.4);
+  }
+
+  /* Soft vignette over photos */
+  #photoPage::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(15,0,0,0.7) 100%);
+    pointer-events: none; z-index: 2;
+  }
+
+  /* ============ FLOATING HEARTS ============ */
+  .floating-heart {
+    position: fixed; z-index: 3;
+    color: rgba(255,100,130,0.25);
+    font-size: 1.4rem;
+    animation: floatUp linear infinite;
+    pointer-events: none;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(100vh) rotate(0deg) scale(1); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translateY(-10vh) rotate(360deg) scale(0.5); opacity: 0; }
+  }
+
+  /* ============ CENTER CONTENT ============ */
+  #centerContent {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+
+  .main-title {
+    font-family: 'Great Vibes', cursive;
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    color: #fff;
+    text-shadow:
+      0 0 20px rgba(255,80,120,0.8),
+      0 0 40px rgba(255,80,120,0.5),
+      0 0 80px rgba(255,80,120,0.3);
+    text-align: center;
+    opacity: 0;
+    animation: titleAppear 2s ease-out 0.5s forwards;
+    line-height: 1.3;
+  }
+  .main-title span {
+    display: block;
+    font-size: 0.5em;
+    font-family: 'Dancing Script', cursive;
+    color: #ff8fa3;
+    margin-top: 5px;
+  }
+
+  .sparkle-divider {
+    margin: 15px 0;
+    font-size: 1.5rem;
+    color: #ff6b8a;
+    opacity: 0;
+    animation: titleAppear 1.5s ease-out 1.5s forwards;
+    letter-spacing: 12px;
+  }
+
+  .click-here-btn {
+    pointer-events: all;
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    color: #fff;
+    background: linear-gradient(135deg, #ff4f7b, #c2185b);
+    border: none;
+    padding: 14px 50px;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-top: 25px;
+    box-shadow:
+      0 0 25px rgba(255,50,80,0.5),
+      0 4px 15px rgba(0,0,0,0.3);
+    opacity: 0;
+    animation: titleAppear 1.5s ease-out 2.2s forwards;
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .click-here-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 40px rgba(255,50,80,0.7), 0 6px 20px rgba(0,0,0,0.4);
+  }
+  .click-here-btn::after {
+    content: '';
+    position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  /* ============ LETTER ============ */
+  #letterSection {
+    position: fixed; inset: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.8s ease;
+    background: radial-gradient(ellipse at center, rgba(30,5,10,0.97) 0%, rgba(10,0,0,0.99) 100%);
+  }
+  #letterSection.show-letter {
+    opacity: 1; pointer-events: all;
+  }
+
+  .letter-container {
+    width: min(90vw, 650px);
+    max-height: 85vh;
+    overflow-y: auto;
+    background: linear-gradient(170deg, #1c0a10 0%, #2a0f18 40%, #1a0810 100%);
+    border: 1px solid rgba(255,107,138,0.25);
+    border-radius: 20px;
+    padding: 50px 45px;
+    position: relative;
+    box-shadow:
+      0 0 60px rgba(255,50,80,0.15),
+      0 20px 60px rgba(0,0,0,0.5),
+      inset 0 0 80px rgba(255,50,80,0.03);
+    transform: scale(0.5) translateY(60px);
+    transition: transform 0.9s cubic-bezier(.34,1.56,.64,1);
+  }
+  #letterSection.show-letter .letter-container {
+    transform: scale(1) translateY(0);
+  }
+
+  /* scrollbar */
+  .letter-container::-webkit-scrollbar { width: 6px; }
+  .letter-container::-webkit-scrollbar-track { background: transparent; }
+  .letter-container::-webkit-scrollbar-thumb {
+    background: rgba(255,107,138,0.3); border-radius: 3px;
+  }
+
+  .letter-corner {
+    position: absolute; font-size: 2.5rem; color: rgba(255,107,138,0.15);
+  }
+  .letter-corner.tl { top: 12px; left: 16px; }
+  .letter-corner.tr { top: 12px; right: 16px; transform: scaleX(-1); }
+  .letter-corner.bl { bottom: 12px; left: 16px; transform: scaleY(-1); }
+  .letter-corner.br { bottom: 12px; right: 16px; transform: scale(-1); }
+
+  .letter-header {
+    text-align: center;
+    font-family: 'Great Vibes', cursive;
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: #ff6b8a;
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px rgba(255,80,120,0.5);
+  }
+  .letter-date {
+    text-align: center;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1rem;
+    color: rgba(255,143,163,0.5);
+    margin-bottom: 25px;
+  }
+  .letter-body {
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+    color: rgba(255,220,230,0.85);
+    line-height: 2;
+    text-align: left;
+    white-space: pre-line;
+  }
+  .letter-signature {
+    text-align: right;
+    font-family: 'Great Vibes', cursive;
+    font-size: 1.8rem;
+    color: #ff6b8a;
+    margin-top: 30px;
+    text-shadow: 0 0 15px rgba(255,80,120,0.4);
+  }
+
+  .letter-mini-hearts {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 1.4rem;
+    color: rgba(255,107,138,0.4);
+    letter-spacing: 8px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ============ PARTICLES (tiny sparkles) ============ */
+  .sparkle {
+    position: fixed; z-index: 4;
+    width: 3px; height: 3px;
+    background: #ffb3c6;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkleFade 2.5s ease-out infinite;
+    box-shadow: 0 0 6px 2px rgba(255,150,180,0.6);
+  }
+  @keyframes sparkleFade {
+    0%   { opacity: 0; transform: scale(0); }
+    50%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0); }
+  }
+
+  /* ============ KEYFRAMES ============ */
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    15% { transform: scale(1.3); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.2); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+  @keyframes titleAppear {
+    0%   { opacity: 0; transform: translateY(30px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes shimmer {
+    0%   { transform: translateX(-100%) rotate(25deg); }
+    100% { transform: translateX(100%) rotate(25deg); }
+  }
+  @keyframes gentleSway {
+    0%, 100% { transform: rotate(-1deg); }
+    50% { transform: rotate(1deg); }
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 600px) {
+    #photoPage {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+    }
+    .letter-container { padding: 35px 25px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== MUSIC OVERLAY (tap to start) ===== -->
+<div id="musicOverlay">
+  <div class="heart-icon">💝</div>
+  <div class="tap-text">Tap anywhere to begin...</div>
+</div>
+
+<!-- ===== BACKGROUND MUSIC ===== -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ===== PHOTO / VIDEO BACKGROUND ===== -->
+<div id="photoPage">
+  <!-- NOTE: Your folder has photo1.jpeg/photo2.jpeg/photo3.jpeg/photo10.jpg.
+       Photos 4-9 are .HEIC which most browsers can't display, so the site uses JPG/JPEG.
+       Middle blocks (6 & 7) are randomized every time she starts the page. -->
+
+  <!-- Row 1 (blocks 1-4) -->
+  <div class="photo-cell"><img data-random-img src="photo1.jpeg" alt="us"></div>
+  <div class="photo-cell"><img data-random-img src="photo2.jpeg" alt="us"></div>
+  <div class="photo-cell"><img data-random-img src="photo10.jpg" alt="us"></div>
+  <div class="photo-cell"><img data-random-img src="photo3.jpeg" alt="us"></div>
+
+  <!-- Row 2 (blocks 5-8). Block 5 & 8 are videos, 6 & 7 are the middle blocks -->
+  <div class="photo-cell"><video src="Video1.MOV" autoplay muted loop playsinline></video></div>
+  <div class="photo-cell"><img id="midBlock6" data-middle-img src="dog1.jpg" alt="dogs"></div>
+  <div class="photo-cell"><img id="midBlock7" data-middle-img src="dog2.jpg" alt="dogs"></div>
+  <div class="photo-cell"><video src="Video2.MOV" autoplay muted loop playsinline></video></div>
+
+  <!-- Row 3 (blocks 9-12) -->
+  <div class="photo-cell"><img data-random-img src="photo3.jpeg" alt="us"></div>
+  <div class="photo-cell"><img data-random-img src="photo10.jpg" alt="us"></div>
+  <div class="photo-cell"><img data-random-img src="photo1.jpeg" alt="us"></div>
+  <div class="photo-cell"><img data-random-img src="photo2.jpeg" alt="us"></div>
+</div>
+
+<!-- ===== CENTER TEXT + BUTTON ===== -->
+<div id="centerContent">
+  <div class="main-title">
+    Happy Valentine's Day
+    <span>— my baby —</span>
+  </div>
+  <div class="sparkle-divider">✦ ♥ ✦ ♥ ✦</div>
+  <button class="click-here-btn" id="clickHereBtn">💌 Click Here 💌</button>
+</div>
+
+<!-- ===== LETTER SECTION (same page, animated in) ===== -->
+<div id="letterSection">
+  <div class="letter-container">
+    <div class="letter-corner tl">❧</div>
+    <div class="letter-corner tr">❧</div>
+    <div class="letter-corner bl">❧</div>
+    <div class="letter-corner br">❧</div>
+
+    <div class="letter-header">My Dearest Princess</div>
+    <div class="letter-date">February 14, 2026</div>
+    <div class="letter-body">
+<!--
+  =============================================
+  WRITE YOUR LETTER HERE!
+  Just type normally, line breaks will be kept.
+  =============================================
+-->
+My Love,
+
+I'm sorry baby if ito pa lang maibibigay ko sayo, babawi me sa lahat lahat, lahat ng deserve, gusto, and needs mo wait mo lang babyy ko, basahin mo muna itong kacornyhan ko HEHEHEHEHEHEHEHE
+
+Every day I wake up with so much excitement knowing I’ll get to see you. You make my world brighter, and just the thought of you fills me with happiness. I want to care for you every single day, to always be by your side, and to kiss you whenever you go to school or OJT.
+
+I find myself wanting to give you everything you need a water bottle, a new lipstick, nail cutics, shorts, and t-shirts. Even when you say you don’t need them, I still want to buy them for you, because it’s my way of showing how much I love you. I’m sorry if I love you too early, and I’m sorry if I can’t give you all the material things right now. The man I am today is a man who can only give you his love, his dreams, and his effort.
+
+I am a man who dreams of building a future with you, who tries every day to become better so that one day I can provide for you. I am a man who will always support you, stand beside you, and love you unconditionally. I am a man who even wants to clean your room, because caring for you in every little way makes me happy.
+
+You are my greatest blessing, and I promise to keep loving you with all my heart, today and always.
+
+Forever yours,  
+Hendry
+    </div>
+    <div class="letter-signature">
+      Forever yours ❤️
+    </div>
+    <div class="letter-mini-hearts">♥ ♥ ♥ ♥ ♥</div>
+  </div>
+</div>
+
+<script>
+// ============ CREATE FLOATING HEARTS ============
+function createFloatingHearts() {
+  const hearts = ['♥', '❤', '💕', '💗', '♡', '💖'];
+  for (let i = 0; i < 20; i++) {
+    const heart = document.createElement('div');
+    heart.classList.add('floating-heart');
+    heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+    heart.style.left = Math.random() * 100 + 'vw';
+    heart.style.fontSize = (Math.random() * 1.5 + 0.8) + 'rem';
+    heart.style.animationDuration = (Math.random() * 6 + 6) + 's';
+    heart.style.animationDelay = (Math.random() * 8) + 's';
+    document.body.appendChild(heart);
+  }
+}
+
+// ============ CREATE SPARKLE PARTICLES ============
+function createSparkles() {
+  for (let i = 0; i < 30; i++) {
+    const s = document.createElement('div');
+    s.classList.add('sparkle');
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.top = Math.random() * 100 + 'vh';
+    s.style.animationDelay = (Math.random() * 5) + 's';
+    s.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    document.body.appendChild(s);
+  }
+}
+
+// ============ RANDOMIZE GRID PHOTOS (NO REPEATS) ============
+// Using the actual files in your folder. (Videos are separate.)
+// Middle blocks (6 & 7) are fixed to dog1.jpg and dog2.jpg.
+const DOG_MIDDLE = ['dog1.jpg', 'dog2.jpg'];
+const NON_DOG_IMAGES = [
+  '4.jpg',
+  '5.jpg',
+  '6.jpg',
+  '7.jpg',
+  'photo1.jpeg',
+  'photo2.jpeg',
+  'photo3.jpeg',
+  'photo10.jpg'
+];
+
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function randomizePhotoGrid() {
+  const mid6 = document.getElementById('midBlock6');
+  const mid7 = document.getElementById('midBlock7');
+
+  // Fix the middle blocks (6 & 7) to the dogs
+  if (mid6) mid6.src = DOG_MIDDLE[0];
+  if (mid7) mid7.src = DOG_MIDDLE[1];
+
+  // Randomize the rest of the images in the grid (no repeats)
+  const rest = Array.from(document.querySelectorAll('#photoPage img[data-random-img]'))
+    .filter(img => img !== mid6 && img !== mid7);
+
+  const pool = shuffleInPlace(NON_DOG_IMAGES.slice());
+  for (let i = 0; i < rest.length; i++) {
+    // If the pool ever becomes too small, we leave remaining slots unchanged
+    // (but with your current set, it matches exactly: 8 images for 8 slots)
+    if (!pool[i]) break;
+    rest[i].src = pool[i];
+  }
+}
+
+// ============ MUSIC OVERLAY TAP ============
+const overlay = document.getElementById('musicOverlay');
+const bgMusic = document.getElementById('bgMusic');
+const photoPage = document.getElementById('photoPage');
+const letterSection = document.getElementById('letterSection');
+const clickHereBtn = document.getElementById('clickHereBtn');
+
+// Music volume: 50%
+bgMusic.volume = 0.5;
+
+// Ensure we don't start with broken filenames
+randomizePhotoGrid();
+
+overlay.addEventListener('click', function () {
+  // Randomize again right as she starts (fresh look)
+  randomizePhotoGrid();
+  // Start music
+  bgMusic.volume = 0.5;
+  bgMusic.play().catch(() => {});
+  // Hide overlay
+  overlay.classList.add('hidden');
+  setTimeout(() => { overlay.style.display = 'none'; }, 800);
+  // Spawn decorations
+  createFloatingHearts();
+  createSparkles();
+});
+
+// ============ CLICK HERE → SHOW LETTER ============
+clickHereBtn.addEventListener('click', function () {
+  // Animate photos out
+  photoPage.classList.add('hide-photos');
+
+  // Fade out center content
+  document.getElementById('centerContent').style.transition = 'opacity 0.6s';
+  document.getElementById('centerContent').style.opacity = '0';
+  setTimeout(() => {
+    document.getElementById('centerContent').style.display = 'none';
+  }, 600);
+
+  // Remove floating hearts & sparkles gently
+  document.querySelectorAll('.floating-heart, .sparkle').forEach(el => {
+    el.style.transition = 'opacity 1s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 1000);
+  });
+
+  // Show letter
+  setTimeout(() => {
+    letterSection.classList.add('show-letter');
+    // Create some new gentle sparkles for the letter page
+    for (let i = 0; i < 15; i++) {
+      const s = document.createElement('div');
+      s.classList.add('sparkle');
+      s.style.left = Math.random() * 100 + 'vw';
+      s.style.top = Math.random() * 100 + 'vh';
+      s.style.animationDelay = (Math.random() * 4) + 's';
+      s.style.zIndex = '25';
+      document.body.appendChild(s);
+    }
+  }, 700);
+
+  // Music keeps playing — no changes needed
+});
+</script>
+
+</body>
+</html>
